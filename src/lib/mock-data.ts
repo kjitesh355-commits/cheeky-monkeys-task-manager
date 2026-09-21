@@ -1,0 +1,593 @@
+import { User, Department, Project, Task, Document, Channel, Message, Notification, ActivityLog } from '../types';
+
+export const INITIAL_USERS: User[] = [
+  {
+    id: 'usr-1',
+    name: 'Jitesh K',
+    email: 'jitesh@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    role: 'SUPER_ADMIN',
+    title: 'Chief Technology Officer',
+    status: 'online',
+  },
+  {
+    id: 'usr-2',
+    name: 'Sarah Jenkins',
+    email: 'sarah.j@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    role: 'DEPARTMENT_MANAGER',
+    title: 'Head of Marketing',
+    departmentId: 'dept-marketing',
+    status: 'online',
+  },
+  {
+    id: 'usr-3',
+    name: 'Alex Rivera',
+    email: 'alex.r@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    role: 'TEAM_LEAD',
+    title: 'Lead Creative Designer',
+    departmentId: 'dept-marketing',
+    status: 'busy',
+  },
+  {
+    id: 'usr-4',
+    name: 'Marcus Vance',
+    email: 'marcus.v@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    role: 'DEPARTMENT_MANAGER',
+    title: 'VP of Global Sales',
+    departmentId: 'dept-sales',
+    status: 'online',
+  },
+  {
+    id: 'usr-5',
+    name: 'Priya Patel',
+    email: 'priya.p@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    role: 'DEPARTMENT_MANAGER',
+    title: 'Director of Operations',
+    departmentId: 'dept-ops',
+    status: 'online',
+  },
+  {
+    id: 'usr-6',
+    name: 'Elena Rostova',
+    email: 'elena.r@enterprise.com',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    role: 'DEPARTMENT_MANAGER',
+    title: 'Head of People & HR',
+    departmentId: 'dept-hr',
+    status: 'away',
+  },
+];
+
+export const INITIAL_DEPARTMENTS: Department[] = [
+  {
+    id: 'dept-marketing',
+    name: 'Marketing',
+    code: 'MKT',
+    description: 'Digital campaigns, brand assets, social media, paid ads & web content.',
+    icon: 'Megaphone',
+    color: '#8B5CF6', // Purple
+    managerId: 'usr-2',
+    teams: [
+      {
+        id: 'team-mkt-digital',
+        name: 'Digital Marketing',
+        departmentId: 'dept-marketing',
+        leadId: 'usr-2',
+        memberIds: ['usr-1', 'usr-2'],
+      },
+      {
+        id: 'team-mkt-design',
+        name: 'Design & Creative',
+        departmentId: 'dept-marketing',
+        leadId: 'usr-3',
+        memberIds: ['usr-3'],
+      },
+    ],
+    projectsCount: 4,
+    tasksCount: 24,
+  },
+  {
+    id: 'dept-sales',
+    name: 'Sales',
+    code: 'SLS',
+    description: 'B2B enterprise pipeline, lead qualification, deal negotiation & client relations.',
+    icon: 'TrendingUp',
+    color: '#10B981', // Emerald green
+    managerId: 'usr-4',
+    teams: [
+      {
+        id: 'team-sls-b2b',
+        name: 'Enterprise Sales',
+        departmentId: 'dept-sales',
+        leadId: 'usr-4',
+        memberIds: ['usr-4'],
+      },
+    ],
+    projectsCount: 2,
+    tasksCount: 16,
+  },
+  {
+    id: 'dept-ops',
+    name: 'Operations',
+    code: 'OPS',
+    description: 'Daily operational logistics, branch management, inventory, maintenance & incident triage.',
+    icon: 'Cpu',
+    color: '#3B82F6', // Blue
+    managerId: 'usr-5',
+    teams: [
+      {
+        id: 'team-ops-core',
+        name: 'Core Operations',
+        departmentId: 'dept-ops',
+        leadId: 'usr-5',
+        memberIds: ['usr-5'],
+      },
+    ],
+    projectsCount: 3,
+    tasksCount: 19,
+  },
+  {
+    id: 'dept-hr',
+    name: 'Human Resources',
+    code: 'HR',
+    description: 'Talent recruitment, employee onboarding, visa & legal documentation, leave management.',
+    icon: 'Users',
+    color: '#EC4899', // Pink
+    managerId: 'usr-6',
+    teams: [
+      {
+        id: 'team-hr-talent',
+        name: 'Talent Acquisition & Onboarding',
+        departmentId: 'dept-hr',
+        leadId: 'usr-6',
+        memberIds: ['usr-6'],
+      },
+    ],
+    projectsCount: 2,
+    tasksCount: 14,
+  },
+];
+
+export const INITIAL_PROJECTS: Project[] = [
+  {
+    id: 'proj-mkt-1',
+    name: 'Q4 Global Rebrand & Social Campaign',
+    description: 'Comprehensive digital overhaul, Instagram Reels, Meta & Google Ad campaigns.',
+    departmentId: 'dept-marketing',
+    teamId: 'team-mkt-digital',
+    ownerId: 'usr-2',
+    memberIds: ['usr-1', 'usr-2', 'usr-3'],
+    status: 'ACTIVE',
+    startDate: '2026-09-01',
+    dueDate: '2026-10-31',
+    budget: 45000,
+    progress: 68,
+    color: '#8B5CF6',
+    icon: 'Sparkles',
+    lists: [
+      { id: 'list-mkt-social', name: 'Social Media', projectId: 'proj-mkt-1', order: 1 },
+      { id: 'list-mkt-paid', name: 'Paid Ads', projectId: 'proj-mkt-1', order: 2 },
+      { id: 'list-mkt-design', name: 'Design Creatives', projectId: 'proj-mkt-1', order: 3 },
+    ],
+  },
+  {
+    id: 'proj-sls-1',
+    name: 'Enterprise Lead Pipeline 2026',
+    description: 'Active enterprise sales pipeline tracking leads from initial outreach to deal closing.',
+    departmentId: 'dept-sales',
+    teamId: 'team-sls-b2b',
+    ownerId: 'usr-4',
+    memberIds: ['usr-4', 'usr-1'],
+    status: 'ACTIVE',
+    startDate: '2026-08-15',
+    dueDate: '2026-12-31',
+    budget: 120000,
+    progress: 54,
+    color: '#10B981',
+    icon: 'DollarSign',
+    lists: [
+      { id: 'list-sls-leads', name: 'New Leads', projectId: 'proj-sls-1', order: 1 },
+      { id: 'list-sls-proposals', name: 'Proposals & Negotiation', projectId: 'proj-sls-1', order: 2 },
+    ],
+  },
+  {
+    id: 'proj-ops-1',
+    name: 'Branch Operations & Maintenance Overhaul',
+    description: 'Facility upgrades, inventory restock schedule, and quarterly incident response readiness.',
+    departmentId: 'dept-ops',
+    teamId: 'team-ops-core',
+    ownerId: 'usr-5',
+    memberIds: ['usr-5'],
+    status: 'ACTIVE',
+    startDate: '2026-09-10',
+    dueDate: '2026-11-15',
+    budget: 35000,
+    progress: 42,
+    color: '#3B82F6',
+    icon: 'Wrench',
+    lists: [
+      { id: 'list-ops-daily', name: 'Daily Ops & Inspections', projectId: 'proj-ops-1', order: 1 },
+      { id: 'list-ops-incidents', name: 'Incidents & Requests', projectId: 'proj-ops-1', order: 2 },
+    ],
+  },
+  {
+    id: 'proj-hr-1',
+    name: 'Q3 New Employee Onboarding & Recruitment',
+    description: 'Automated 9-step onboarding workflow for engineering, sales, and product hires.',
+    departmentId: 'dept-hr',
+    teamId: 'team-hr-talent',
+    ownerId: 'usr-6',
+    memberIds: ['usr-6', 'usr-1'],
+    status: 'ACTIVE',
+    startDate: '2026-09-01',
+    dueDate: '2026-10-15',
+    progress: 80,
+    color: '#EC4899',
+    icon: 'UserPlus',
+    lists: [
+      { id: 'list-hr-recruitment', name: 'Recruitment Pipeline', projectId: 'proj-hr-1', order: 1 },
+      { id: 'list-hr-onboarding', name: 'Onboarding Checklist', projectId: 'proj-hr-1', order: 2 },
+    ],
+  },
+];
+
+export const INITIAL_TASKS: Task[] = [
+  // Marketing Tasks
+  {
+    id: 'task-1',
+    title: 'September Instagram Content Calendar',
+    description: 'Draft, curate and schedule 20 high-performing Carousel and Reel posts for the Q4 rebrand campaign.',
+    status: 'IN_PROGRESS',
+    priority: 'HIGH',
+    projectId: 'proj-mkt-1',
+    listId: 'list-mkt-social',
+    departmentId: 'dept-marketing',
+    assigneeIds: ['usr-2', 'usr-3'],
+    createdById: 'usr-2',
+    startDate: '2026-09-15',
+    dueDate: '2026-09-25',
+    tags: ['Instagram', 'Social Media', 'Rebrand'],
+    progress: 60,
+    commentsCount: 3,
+    estimatedHours: 16,
+    loggedHours: 10,
+    subtasks: [
+      { id: 'sub-1-1', taskId: 'task-1', title: 'Research top trending competitor audio', completed: true, assigneeId: 'usr-2' },
+      { id: 'sub-1-2', taskId: 'task-1', title: 'Create post copy & hashtag list', completed: true, assigneeId: 'usr-2' },
+      { id: 'sub-1-3', taskId: 'task-1', title: 'Export 1080x1350 motion graphics from Design', completed: false, assigneeId: 'usr-3' },
+      { id: 'sub-1-4', taskId: 'task-1', title: 'Schedule posts in Meta Business Suite', completed: false, assigneeId: 'usr-2' },
+    ],
+    checklist: [
+      { id: 'chk-1', text: 'Ensure brand palette matches Indigo #8B5CF6', completed: true },
+      { id: 'chk-2', text: 'Tag key influencer partners', completed: false },
+    ],
+    attachments: [
+      { id: 'att-1', name: 'Q4_Moodboard_v2.pdf', url: '#', size: '4.2 MB', type: 'application/pdf', uploadedAt: '2026-09-18' },
+    ],
+    createdAt: '2026-09-15T09:00:00Z',
+    updatedAt: '2026-09-20T14:30:00Z',
+  },
+  {
+    id: 'task-2',
+    title: 'Meta Ads Q4 Campaign Setup & Budget Allocations',
+    description: 'Configure Retargeting and Prospecting ad sets with $15,000 monthly allocation across Facebook & Instagram.',
+    status: 'IN_REVIEW',
+    priority: 'URGENT',
+    projectId: 'proj-mkt-1',
+    listId: 'list-mkt-paid',
+    departmentId: 'dept-marketing',
+    assigneeIds: ['usr-1', 'usr-2'],
+    createdById: 'usr-2',
+    startDate: '2026-09-18',
+    dueDate: '2026-09-24',
+    tags: ['Meta Ads', 'Paid Growth', 'Conversion'],
+    progress: 90,
+    commentsCount: 5,
+    estimatedHours: 12,
+    loggedHours: 11,
+    subtasks: [
+      { id: 'sub-2-1', taskId: 'task-2', title: 'Set up Pixel custom conversion events', completed: true, assigneeId: 'usr-1' },
+      { id: 'sub-2-2', taskId: 'task-2', title: 'Upload video creatives', completed: true, assigneeId: 'usr-2' },
+      { id: 'sub-2-3', taskId: 'task-2', title: 'Manager final approval on daily spend limit', completed: false, assigneeId: 'usr-1' },
+    ],
+    createdAt: '2026-09-18T11:00:00Z',
+    updatedAt: '2026-09-21T10:15:00Z',
+  },
+  {
+    id: 'task-3',
+    title: 'Design Q4 Key Visuals & Brand Typography Package',
+    description: 'Export SVG icon packs, Figma UI components, and 4K vector posters for marketing collateral.',
+    status: 'APPROVED',
+    priority: 'HIGH',
+    projectId: 'proj-mkt-1',
+    listId: 'list-mkt-design',
+    departmentId: 'dept-marketing',
+    assigneeIds: ['usr-3'],
+    createdById: 'usr-2',
+    startDate: '2026-09-05',
+    dueDate: '2026-09-22',
+    tags: ['Design', 'Figma', 'Brand Guidelines'],
+    progress: 100,
+    commentsCount: 2,
+    estimatedHours: 24,
+    loggedHours: 24,
+    subtasks: [
+      { id: 'sub-3-1', taskId: 'task-3', title: 'Create typography hierarchy specimen', completed: true, assigneeId: 'usr-3' },
+      { id: 'sub-3-2', taskId: 'task-3', title: 'Finalize primary & accent palette variables', completed: true, assigneeId: 'usr-3' },
+    ],
+    createdAt: '2026-09-05T08:30:00Z',
+    updatedAt: '2026-09-21T16:00:00Z',
+  },
+
+  // Sales CRM Tasks
+  {
+    id: 'task-4',
+    title: 'AeroTech Systems Enterprise Contract Negotiation',
+    description: 'Enterprise contract for 500 seats. Lead Source: Inbound Web Demo request.',
+    status: 'IN_PROGRESS',
+    priority: 'URGENT',
+    projectId: 'proj-sls-1',
+    listId: 'list-sls-proposals',
+    departmentId: 'dept-sales',
+    assigneeIds: ['usr-4'],
+    createdById: 'usr-4',
+    startDate: '2026-09-10',
+    dueDate: '2026-09-28',
+    tags: ['Enterprise Deal', 'Proposal', 'B2B'],
+    customFields: {
+      leadName: 'AeroTech Corp',
+      dealValue: 75000,
+      contactPerson: 'David Miller (VP Tech)',
+      leadStatus: 'Negotiation',
+      followUpDate: '2026-09-23',
+    },
+    progress: 75,
+    commentsCount: 4,
+    subtasks: [
+      { id: 'sub-4-1', taskId: 'task-4', title: 'Send custom enterprise SLA document', completed: true, assigneeId: 'usr-4' },
+      { id: 'sub-4-2', taskId: 'task-4', title: 'Legal review on data security addendum', completed: true, assigneeId: 'usr-4' },
+      { id: 'sub-4-3', taskId: 'task-4', title: 'Final executive signature call', completed: false, assigneeId: 'usr-4' },
+    ],
+    createdAt: '2026-09-10T14:00:00Z',
+    updatedAt: '2026-09-21T15:20:00Z',
+  },
+  {
+    id: 'task-5',
+    title: 'Qualify Inbound Lead: Apex Logistics Group',
+    description: 'Mid-market inquiry regarding automated task routing & department dashboards.',
+    status: 'TO_DO',
+    priority: 'MEDIUM',
+    projectId: 'proj-sls-1',
+    listId: 'list-sls-leads',
+    departmentId: 'dept-sales',
+    assigneeIds: ['usr-4'],
+    createdById: 'usr-4',
+    startDate: '2026-09-20',
+    dueDate: '2026-09-25',
+    tags: ['Lead', 'Discovery Call'],
+    customFields: {
+      leadName: 'Apex Logistics',
+      dealValue: 28000,
+      contactPerson: 'Claire Bennett',
+      leadStatus: 'New Lead',
+    },
+    progress: 0,
+    commentsCount: 1,
+    subtasks: [
+      { id: 'sub-5-1', taskId: 'task-5', title: 'Schedule 30-min discovery call', completed: false, assigneeId: 'usr-4' },
+    ],
+    createdAt: '2026-09-20T10:00:00Z',
+    updatedAt: '2026-09-20T10:00:00Z',
+  },
+
+  // Operations Tasks
+  {
+    id: 'task-6',
+    title: 'Branch Office Server Upgrade & Network Maintenance',
+    description: 'Deploy fiber router backup units and perform routine quarterly security audit across all workstations.',
+    status: 'IN_PROGRESS',
+    priority: 'HIGH',
+    projectId: 'proj-ops-1',
+    listId: 'list-ops-daily',
+    departmentId: 'dept-ops',
+    assigneeIds: ['usr-5', 'usr-1'],
+    createdById: 'usr-5',
+    startDate: '2026-09-12',
+    dueDate: '2026-09-26',
+    tags: ['Infrastructure', 'IT Ops', 'Maintenance'],
+    progress: 50,
+    commentsCount: 2,
+    subtasks: [
+      { id: 'sub-6-1', taskId: 'task-6', title: 'Order hardware replacement modules', completed: true, assigneeId: 'usr-5' },
+      { id: 'sub-6-2', taskId: 'task-6', title: 'Schedule maintenance window (After 8 PM)', completed: true, assigneeId: 'usr-1' },
+      { id: 'sub-6-3', taskId: 'task-6', title: 'Run automated ping and stress tests', completed: false, assigneeId: 'usr-1' },
+    ],
+    createdAt: '2026-09-12T09:30:00Z',
+    updatedAt: '2026-09-21T12:00:00Z',
+  },
+
+  // HR Tasks & Onboarding
+  {
+    id: 'task-7',
+    title: 'New Senior Full-Stack Engineer Onboarding (Ryan Vance)',
+    description: 'Standard 9-step enterprise employee onboarding workflow for engineering department hire.',
+    status: 'IN_PROGRESS',
+    priority: 'HIGH',
+    projectId: 'proj-hr-1',
+    listId: 'list-hr-onboarding',
+    departmentId: 'dept-hr',
+    assigneeIds: ['usr-6', 'usr-1'],
+    createdById: 'usr-6',
+    startDate: '2026-09-15',
+    dueDate: '2026-09-30',
+    tags: ['HR Onboarding', 'Engineering', 'Checklist'],
+    progress: 66,
+    commentsCount: 3,
+    subtasks: [
+      { id: 'sub-7-1', taskId: 'task-7', title: 'Offer Letter Signed & Archived', completed: true, assigneeId: 'usr-6' },
+      { id: 'sub-7-2', taskId: 'task-7', title: 'Required Identity & Passport Documents', completed: true, assigneeId: 'usr-6' },
+      { id: 'sub-7-3', taskId: 'task-7', title: 'Visa Process & Medical Clearance', completed: true, assigneeId: 'usr-6' },
+      { id: 'sub-7-4', taskId: 'task-7', title: 'Emirates ID / National Security Pass', completed: true, assigneeId: 'usr-6' },
+      { id: 'sub-7-5', taskId: 'task-7', title: 'Provision Company Email & Google Workspace', completed: true, assigneeId: 'usr-1' },
+      { id: 'sub-7-6', taskId: 'task-7', title: 'Grant System Access & Security Hardware Key', completed: true, assigneeId: 'usr-1' },
+      { id: 'sub-7-7', taskId: 'task-7', title: 'Orientation & HR Welcome Session', completed: false, assigneeId: 'usr-6' },
+      { id: 'sub-7-8', taskId: 'task-7', title: 'Review Employee Handbook & IP Policy', completed: false, assigneeId: 'usr-6' },
+      { id: 'sub-7-9', taskId: 'task-7', title: 'Department Introduction & Manager Sync', completed: false, assigneeId: 'usr-1' },
+    ],
+    createdAt: '2026-09-15T08:00:00Z',
+    updatedAt: '2026-09-21T14:45:00Z',
+  },
+];
+
+export const INITIAL_DOCUMENTS: Document[] = [
+  {
+    id: 'doc-1',
+    title: 'Enterprise Operating Standard & Brand Voice Manual',
+    content: `# Enterprise Operating Standard & Brand Voice Manual
+
+## Core Principles
+1. **Speed & Clarity**: We prioritize concise, accurate communication across all departments.
+2. **Visual Precision**: Every document, post, and campaign should adhere to our dark/light indigo design tokens.
+3. **Data Security**: All client records and sales proposals must reside inside RLS-protected Supabase repositories.
+
+## Department Guidelines
+- **Marketing**: All creative assets require 2-tier approval (Lead Designer & Head of Marketing).
+- **Sales**: Follow-up SLAs must not exceed 24 hours from initial inbound lead generation.
+- **HR**: Onboarding workflows must complete all compliance checks within 7 business days of candidate start date.
+`,
+    authorId: 'usr-1',
+    category: 'Company',
+    updatedAt: '2026-09-20',
+    icon: 'BookOpen',
+  },
+  {
+    id: 'doc-2',
+    title: 'Q4 Marketing Strategy & Media Buying Playbook',
+    content: `# Q4 Marketing Strategy & Media Buying Playbook
+
+### Objectives
+- Drive **35% MoM increase** in qualified enterprise trial signups.
+- Maintain CAC below **$180** on Meta & Google Ads.
+
+### Channels & Budget Split
+- **Meta Ads (FB/IG)**: $25,000 / mo
+- **Google Search & YouTube**: $15,000 / mo
+- **LinkedIn Account-Based Marketing**: $10,000 / mo
+`,
+    authorId: 'usr-2',
+    departmentId: 'dept-marketing',
+    category: 'Department',
+    updatedAt: '2026-09-19',
+    icon: 'Target',
+  },
+];
+
+export const INITIAL_CHANNELS: Channel[] = [
+  { id: 'chan-1', name: 'announcements', type: 'PUBLIC', memberIds: ['usr-1', 'usr-2', 'usr-3', 'usr-4', 'usr-5', 'usr-6'], unreadCount: 1 },
+  { id: 'chan-2', name: 'marketing-team', type: 'PUBLIC', departmentId: 'dept-marketing', memberIds: ['usr-1', 'usr-2', 'usr-3'], unreadCount: 3 },
+  { id: 'chan-3', name: 'sales-war-room', type: 'PUBLIC', departmentId: 'dept-sales', memberIds: ['usr-1', 'usr-4'] },
+  { id: 'chan-4', name: 'ops-incidents', type: 'PUBLIC', departmentId: 'dept-ops', memberIds: ['usr-1', 'usr-5'] },
+  { id: 'chan-5', name: 'hr-onboarding-hub', type: 'PUBLIC', departmentId: 'dept-hr', memberIds: ['usr-1', 'usr-6'] },
+];
+
+export const INITIAL_MESSAGES: Message[] = [
+  {
+    id: 'msg-1',
+    channelId: 'chan-2',
+    senderId: 'usr-2',
+    content: 'Team, the Q4 Rebrand key visual package is officially approved! Check out task [Design Q4 Key Visuals](task-3).',
+    createdAt: '2026-09-21T15:30:00Z',
+    reactions: { '🔥': ['usr-1', 'usr-3'], '🙌': ['usr-3'] },
+  },
+  {
+    id: 'msg-2',
+    channelId: 'chan-2',
+    senderId: 'usr-3',
+    content: 'Awesome! Exporting high-res 4K vectors into Figma now. Instagram Reel motion renders will be ready tomorrow afternoon.',
+    createdAt: '2026-09-21T15:34:00Z',
+  },
+  {
+    id: 'msg-3',
+    channelId: 'chan-1',
+    senderId: 'usr-1',
+    content: '🚀 WORKSPACE v2.4 Platform Update is live across all departments. Command palette Ctrl+K is now active!',
+    createdAt: '2026-09-21T16:00:00Z',
+    reactions: { '🎉': ['usr-2', 'usr-4', 'usr-5', 'usr-6'] },
+  },
+];
+
+export const INITIAL_NOTIFICATIONS: Notification[] = [
+  {
+    id: 'notif-1',
+    userId: 'usr-1',
+    title: 'Task Assigned',
+    message: 'Sarah Jenkins assigned you to "Meta Ads Q4 Campaign Setup & Budget Allocations".',
+    type: 'ASSIGNMENT',
+    read: false,
+    taskId: 'task-2',
+    createdAt: '2 hours ago',
+  },
+  {
+    id: 'notif-2',
+    userId: 'usr-1',
+    title: 'Approval Granted',
+    message: 'Alex Rivera approved creative assets for "September Instagram Content Calendar".',
+    type: 'APPROVAL',
+    read: false,
+    taskId: 'task-1',
+    createdAt: '4 hours ago',
+  },
+  {
+    id: 'notif-3',
+    userId: 'usr-1',
+    title: 'High Priority Lead',
+    message: 'Marcus Vance moved deal "AeroTech Systems Enterprise Contract" to Negotiation stage.',
+    type: 'STATUS_CHANGE',
+    read: true,
+    taskId: 'task-4',
+    createdAt: '1 day ago',
+  },
+];
+
+export const INITIAL_ACTIVITY_LOGS: ActivityLog[] = [
+  {
+    id: 'act-1',
+    userId: 'usr-3',
+    action: 'Completed Task',
+    targetType: 'TASK',
+    targetTitle: 'Design Q4 Key Visuals & Brand Typography Package',
+    details: 'Changed status from IN_REVIEW to APPROVED',
+    createdAt: '2026-09-21T16:00:00Z',
+  },
+  {
+    id: 'act-2',
+    userId: 'usr-4',
+    action: 'Updated Deal Value',
+    targetType: 'TASK',
+    targetTitle: 'AeroTech Systems Enterprise Contract Negotiation',
+    details: 'Updated deal value to $75,000',
+    createdAt: '2026-09-21T15:20:00Z',
+  },
+  {
+    id: 'act-3',
+    userId: 'usr-6',
+    action: 'Checked Subtask',
+    targetType: 'TASK',
+    targetTitle: 'New Senior Full-Stack Engineer Onboarding (Ryan Vance)',
+    details: 'Completed step: Provision Company Email & Google Workspace',
+    createdAt: '2026-09-21T14:45:00Z',
+  },
+  {
+    id: 'act-4',
+    userId: 'usr-2',
+    action: 'Created Comment',
+    targetType: 'TASK',
+    targetTitle: 'September Instagram Content Calendar',
+    details: 'Added feedback regarding Instagram Carousel slide 3 layout',
+    createdAt: '2026-09-21T14:30:00Z',
+  },
+];
