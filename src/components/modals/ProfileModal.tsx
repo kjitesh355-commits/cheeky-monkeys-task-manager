@@ -39,8 +39,8 @@ export const ProfileModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
     if (supabase) {
       await supabase.auth.signOut();
     }
-    // Redirect to login page
-    window.location.href = '/login';
+    // Full reload on logout so all in-memory workspace state is cleared
+    window.location.href = new URL('/login', window.location.origin).href;
   };
 
   if (!isOpen) return null;

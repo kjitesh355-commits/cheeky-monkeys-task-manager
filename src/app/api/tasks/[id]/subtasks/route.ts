@@ -7,7 +7,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -21,7 +21,7 @@ export async function POST(
   }
 
   if (isDemoMode()) {
-    const task = demoStore.tasks.find((t: any) => t.id === taskId);
+    const task = demoStore.tasks.find((t) => t.id === taskId);
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
     }

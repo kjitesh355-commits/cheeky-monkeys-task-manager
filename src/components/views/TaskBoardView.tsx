@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, CheckSquare, Clock, AlertTriangle, MoreVertical, MessageSquare } from 'lucide-react';
+import { Plus, CheckSquare, MessageSquare } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
-import { Task, TaskStatus } from '../../types';
+import { TaskStatus } from '../../types';
 
 export const TaskBoardView: React.FC = () => {
   const {

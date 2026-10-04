@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Mail, Lock, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/env';
@@ -19,14 +19,8 @@ export default function ResetPasswordForm({ type }: ResetPasswordFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [step, setStep] = useState<'request' | 'reset'>('request');
-
-  // If coming from email link, go directly to reset step
-  useEffect(() => {
-    if (type === 'recovery') {
-      setStep('reset');
-    }
-  }, [type]);
+  // Coming from the emailed recovery link, go directly to the reset step.
+  const step = type === 'recovery' ? 'reset' : 'request';
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();

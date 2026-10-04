@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/supabase/server';
-import { appMode } from '@/lib/env';
 import { demoStore, getUser, isDemoMode } from '../_utils';
 
+type TaskActivityRow = {
+  id: string;
+  task_id: string;
+  user_id: string;
+  action_type: string;
+  action_data: Record<string, unknown> | null;
+  created_at: string;
+  user?: unknown;
+};
+
 export async function GET(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -17,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (isDemoMode()) {
-    const activity = demoStore.taskActivity?.filter((a: any) => a.taskId === taskId) || [];
+    const activity = demoStore.taskActivity?.filter((a) => a.taskId === taskId) || [];
     return NextResponse.json(activity);
   }
 
@@ -39,7 +48,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const activity = data?.map((a: any) => ({
+  const activity = data?.map((a: TaskActivityRow) => ({
     ...a,
     taskId: a.task_id,
     userId: a.user_id,
@@ -53,7 +62,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
       actionType,
       actionData: actionData || {},
       createdAt: new Date().toISOString(),
-      user: demoStore.users.find((u: any) => u.id === user.id),
+      user: demoStore.users.find((u) => u.id === user.id),
     };
     
     if (!demoStore.taskActivity) demoStore.taskActivity = [];

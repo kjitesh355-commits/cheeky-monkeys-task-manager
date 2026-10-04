@@ -7,7 +7,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -17,7 +17,7 @@ export async function PATCH(
   const { content, reaction } = body;
 
   if (isDemoMode()) {
-    const updateIndex = demoStore.taskUpdates?.findIndex((u: any) => u.id === id);
+    const updateIndex = demoStore.taskUpdates?.findIndex((u) => u.id === id);
     if (updateIndex === undefined || updateIndex === -1) {
       return NextResponse.json({ error: 'Update not found' }, { status: 404 });
     }
@@ -29,11 +29,11 @@ export async function PATCH(
     if (reaction) {
       if (!demoStore.taskUpdateReactions) demoStore.taskUpdateReactions = [];
       const existingReaction = demoStore.taskUpdateReactions.find(
-        (r: any) => r.updateId === id && r.userId === user.id && r.reaction === reaction
+        (r) => r.updateId === id && r.userId === user.id && r.reaction === reaction
       );
       if (existingReaction) {
         demoStore.taskUpdateReactions = demoStore.taskUpdateReactions.filter(
-          (r: any) => !(r.updateId === id && r.userId === user.id && r.reaction === reaction)
+          (r) => !(r.updateId === id && r.userId === user.id && r.reaction === reaction)
         );
       } else {
         demoStore.taskUpdateReactions.push({
@@ -141,7 +141,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -149,7 +149,7 @@ export async function DELETE(
   const { id } = await params;
 
   if (isDemoMode()) {
-    const existing = demoStore.taskUpdates?.find((u: any) => u.id === id);
+    const existing = demoStore.taskUpdates?.find((u) => u.id === id);
     if (!existing) {
       return NextResponse.json({ error: 'Update not found' }, { status: 404 });
     }
@@ -159,9 +159,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'You can only delete your own updates' }, { status: 403 });
     }
 
-    demoStore.taskUpdates = demoStore.taskUpdates.filter((u: any) => u.id !== id);
-    demoStore.taskUpdateMentions = demoStore.taskUpdateMentions.filter((m: any) => m.updateId !== id);
-    demoStore.taskUpdateReactions = demoStore.taskUpdateReactions.filter((r: any) => r.updateId !== id);
+    demoStore.taskUpdates = demoStore.taskUpdates.filter((u) => u.id !== id);
+    demoStore.taskUpdateMentions = demoStore.taskUpdateMentions.filter((m) => m.updateId !== id);
+    demoStore.taskUpdateReactions = demoStore.taskUpdateReactions.filter((r) => r.updateId !== id);
     await logTaskActivity(null, existing.taskId, user.id, 'COMMENT_DELETED', { preview: existing.content.substring(0, 120) });
 
     return NextResponse.json({ success: true });

@@ -4,7 +4,7 @@ import { demoStore, getUser, isDemoMode } from '../_utils';
 import { canModerate, getUserRole } from '../_helpers';
 
 export async function POST(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

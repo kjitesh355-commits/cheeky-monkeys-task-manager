@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'WORKSPACE | Sign In',
@@ -11,11 +10,7 @@ export default function AuthLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className="light">
-      <body className="antialiased">
-        {children}
-      </body>
-    </html>
-  );
+  // Root layout already renders <html>/<body>; nesting a second pair here
+  // makes the body class mismatch during hydration.
+  return <>{children}</>;
 }

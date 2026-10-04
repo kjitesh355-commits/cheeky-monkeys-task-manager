@@ -3,7 +3,30 @@ import { getSupabaseServer } from '@/supabase/server';
 import { demoStore, getUser, isDemoMode } from '../_utils';
 import { createNotification, logTaskActivity } from '../_helpers';
 
-function shapeUpdate(u: any) {
+type TaskUpdateReactionRow = { reaction: string; user_id: string; userId?: string };
+type TaskUpdateMentionRow = { mentioned_user_id: string };
+
+// Raw `task_updates` row (snake_case columns) with relations from Supabase.
+type TaskUpdateRow = {
+  id: string;
+  content: string;
+  task_id?: string | null;
+  user_id?: string | null;
+  parent_update_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  taskId?: string;
+  userId?: string;
+  parentUpdateId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  author?: unknown;
+  replies?: TaskUpdateRow[];
+  reactions?: TaskUpdateReactionRow[] | null;
+  mentions?: TaskUpdateMentionRow[] | null;
+};
+
+function shapeUpdate(u: TaskUpdateRow) {
   return {
     ...u,
     taskId: u.task_id ?? u.taskId,
@@ -15,8 +38,8 @@ function shapeUpdate(u: any) {
   };
 }
 
-function shapeReactionList(reactions: any[] | undefined) {
-  return (reactions || []).reduce((acc: any, r: any) => {
+function shapeReactionList(reactions: TaskUpdateReactionRow[] | null | undefined): Record<string, string[]> {
+  return (reactions || []).reduce((acc: Record<string, string[]>, r: TaskUpdateReactionRow) => {
     if (!acc[r.reaction]) acc[r.reaction] = [];
     acc[r.reaction].push(r.user_id ?? r.userId);
     return acc;
@@ -24,7 +47,7 @@ function shapeReactionList(reactions: any[] | undefined) {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -38,10 +61,10 @@ export async function GET(request: NextRequest) {
 
   if (isDemoMode()) {
     const updates = (demoStore.taskUpdates || [])
-      .filter((u: any) => u.taskId === taskId)
-      .map((u: any) => ({
+      .filter((u) => u.taskId === taskId)
+      .map((u) => ({
         ...u,
-        replyCount: (demoStore.taskUpdates || []).filter((r: any) => r.parentUpdateId === u.id).length,
+        replyCount: (demoStore.taskUpdates || []).filter((r) => r.parentUpdateId === u.id).length,
       }));
     return NextResponse.json(updates);
   }
@@ -68,8 +91,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const updates = data?.map((u: any) => {
-    const shapedReplies = (u.replies || []).map((r: any) => ({
+  const updates = data?.map((u: TaskUpdateRow) => {
+    const shapedReplies = (u.replies || []).map((r) => ({
       ...shapeUpdate(r),
       author: r.author,
       reactions: shapeReactionList(r.reactions),
@@ -82,7 +105,7 @@ export async function GET(request: NextRequest) {
       author: u.author,
       replies: shapedReplies,
       reactions: shapeReactionList(u.reactions),
-      mentions: u.mentions?.map((m: any) => m.mentioned_user_id) || [],
+      mentions: u.mentions?.map((m) => m.mentioned_user_id) || [],
       replyCount: shapedReplies.length,
     };
   }) || [];
@@ -91,13 +114,13 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const body = await request.json();
-  const { taskId, content, parentUpdateId, mentions, attachment } = body;
+  const { taskId, content, parentUpdateId, mentions } = body;
 
   if (!taskId || !content) {
     return NextResponse.json({ error: 'taskId and content required' }, { status: 400 });
@@ -112,7 +135,7 @@ export async function POST(request: NextRequest) {
       content,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      author: demoStore.users.find((u: any) => u.id === user.id),
+      author: demoStore.users.find((u) => u.id === user.id),
       replies: [],
       reactions: {},
       mentions: mentions || [],
@@ -200,7 +223,7 @@ async function notifyMentions(
     const { data } = await supabase.from('profiles').select('name').eq('id', authorId).single();
     authorName = data?.name || authorName;
   } else {
-    authorName = demoStore.users.find((u: any) => u.id === authorId)?.name || authorName;
+    authorName = demoStore.users.find((u) => u.id === authorId)?.name || authorName;
   }
 
   let taskTitle = '';
@@ -208,7 +231,7 @@ async function notifyMentions(
     const { data } = await supabase.from('tasks').select('title').eq('id', taskId).single();
     taskTitle = data?.title || '';
   } else {
-    taskTitle = demoStore.tasks.find((t: any) => t.id === taskId)?.title || '';
+    taskTitle = demoStore.tasks.find((t) => t.id === taskId)?.title || '';
   }
 
   const excerpt = content.replace(/\s+/g, ' ').substring(0, 100);

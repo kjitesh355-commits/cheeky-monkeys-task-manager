@@ -3,22 +3,30 @@ import { getSupabaseServer } from '@/supabase/server';
 import { demoStore, getUser, isDemoMode } from '../_utils';
 import { logTaskActivity, mapTask } from '../_helpers';
 
+type TaskDependencyRow = {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  createdBy?: string;
+  createdAt: string;
+};
+
 function demoDependencies(taskId: string) {
   const deps = demoStore.taskDependencies || [];
   return {
     blockedBy: deps
-      .filter((d: any) => d.taskId === taskId)
-      .map((d: any) => demoStore.tasks.find((t: any) => t.id === d.dependsOnTaskId))
+      .filter((d: TaskDependencyRow) => d.taskId === taskId)
+      .map((d: TaskDependencyRow) => demoStore.tasks.find((t) => t.id === d.dependsOnTaskId))
       .filter(Boolean),
     blocking: deps
-      .filter((d: any) => d.dependsOnTaskId === taskId)
-      .map((d: any) => demoStore.tasks.find((t: any) => t.id === d.taskId))
+      .filter((d: TaskDependencyRow) => d.dependsOnTaskId === taskId)
+      .map((d: TaskDependencyRow) => demoStore.tasks.find((t) => t.id === d.taskId))
       .filter(Boolean),
   };
 }
 
 export async function GET(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -31,9 +39,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (isDemoMode()) {
-    const task = demoStore.tasks.find((t: any) => t.id === taskId);
+    const task = demoStore.tasks.find((t) => t.id === taskId);
     const parentTask = task?.parentTaskId
-      ? demoStore.tasks.find((t: any) => t.id === task.parentTaskId) || null
+      ? demoStore.tasks.find((t) => t.id === task.parentTaskId) || null
       : null;
     const { blockedBy, blocking } = demoDependencies(taskId);
     return NextResponse.json({ parentTask, blockedBy, blocking });
@@ -67,8 +75,8 @@ export async function GET(request: NextRequest) {
     supabase.from('task_dependencies').select('task_id').eq('depends_on_task_id', taskId),
   ]);
 
-  const blockedIds = (blockedRows || []).map((r: any) => r.depends_on_task_id);
-  const blockingIds = (blockingRows || []).map((r: any) => r.task_id);
+  const blockedIds = (blockedRows || []).map((r: { depends_on_task_id: string }) => r.depends_on_task_id);
+  const blockingIds = (blockingRows || []).map((r: { task_id: string }) => r.task_id);
 
   const [blockedRes, blockingRes] = await Promise.all([
     blockedIds.length
@@ -87,7 +95,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -104,7 +112,7 @@ export async function POST(request: NextRequest) {
   if (isDemoMode()) {
     demoStore.taskDependencies = demoStore.taskDependencies || [];
     const exists = demoStore.taskDependencies.find(
-      (d: any) => d.taskId === taskId && d.dependsOnTaskId === dependsOnTaskId
+      (d: TaskDependencyRow) => d.taskId === taskId && d.dependsOnTaskId === dependsOnTaskId
     );
     if (!exists) {
       demoStore.taskDependencies.push({
@@ -114,7 +122,7 @@ export async function POST(request: NextRequest) {
         createdBy: user.id,
         createdAt: new Date().toISOString(),
       });
-      const blockedTask = demoStore.tasks.find((t: any) => t.id === dependsOnTaskId);
+      const blockedTask = demoStore.tasks.find((t) => t.id === dependsOnTaskId);
       await logTaskActivity(null, taskId, user.id, 'DEPENDENCY_ADDED', {
         depends_on_task_id: dependsOnTaskId,
         depends_on_title: blockedTask?.title,
@@ -152,7 +160,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -165,7 +173,7 @@ export async function DELETE(request: NextRequest) {
 
   if (isDemoMode()) {
     demoStore.taskDependencies = (demoStore.taskDependencies || []).filter(
-      (d: any) => !(d.taskId === taskId && d.dependsOnTaskId === dependsOnTaskId)
+      (d: TaskDependencyRow) => !(d.taskId === taskId && d.dependsOnTaskId === dependsOnTaskId)
     );
     await logTaskActivity(null, taskId, user.id, 'DEPENDENCY_REMOVED', { depends_on_task_id: dependsOnTaskId });
     return NextResponse.json({ success: true });

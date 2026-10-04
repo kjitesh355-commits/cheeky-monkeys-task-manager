@@ -22,7 +22,7 @@ const TaskForm: React.FC = () => {
   const [departmentId, setDepartmentId] = useState(activeDepartmentId || departments[0]?.id || '');
   const [projectId, setProjectId] = useState(activeProjectId || projects[0]?.id || '');
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
-  const [status, setStatus] = useState<TaskStatus>('TO_DO');
+  const [status] = useState<TaskStatus>('TO_DO');
   const [assigneeId, setAssigneeId] = useState(users[0]?.id || '');
   const [dueDate, setDueDate] = useState(taskModalDueDate || '');
   const [tagInput, setTagInput] = useState('');

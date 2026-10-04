@@ -185,7 +185,7 @@ interface WorkspaceContextType {
   
   // Task Activity
   loadTaskActivity: (taskId: string) => Promise<void>;
-  logTaskActivity: (taskId: string, actionType: string, actionData?: Record<string, any>) => Promise<void>;
+  logTaskActivity: (taskId: string, actionType: string, actionData?: Record<string, unknown>) => Promise<void>;
 
   // Task Relationships (parent, dependencies)
   loadTaskRelations: (taskId: string) => Promise<void>;
@@ -221,6 +221,13 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 const isDemoMode = appMode !== 'supabase';
 
+// Impure id generation lives at module scope so component render stays pure.
+let localIdSeq = 0;
+function localId(prefix: string) {
+  localIdSeq += 1;
+  return `${prefix}-${Date.now()}-${localIdSeq}`;
+}
+
 async function apiGet(endpoint: string, params?: Record<string, string>) {
   const searchParams = new URLSearchParams(params);
   const url = `/api/${endpoint}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
@@ -229,7 +236,7 @@ async function apiGet(endpoint: string, params?: Record<string, string>) {
   return res.json();
 }
 
-async function apiPost(endpoint: string, body: any) {
+async function apiPost(endpoint: string, body: unknown) {
   const res = await fetch(`/api/${endpoint}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -240,7 +247,7 @@ async function apiPost(endpoint: string, body: any) {
   return res.json();
 }
 
-async function apiPatch(endpoint: string, body: any) {
+async function apiPatch(endpoint: string, body: unknown) {
   const res = await fetch(`/api/${endpoint}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -311,13 +318,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // State updates instantly (no loading flash), the URL is pushed right after,
   // batched so handlers that call several setters produce a single navigation.
   const navStateRef = useRef({ view: activeView, deptId: activeDepartmentId, projectId: activeProjectId, scope: taskScope });
-  navStateRef.current = { view: activeView, deptId: activeDepartmentId, projectId: activeProjectId, scope: taskScope };
-  const currentPathRef = useRef(currentPath);
-  currentPathRef.current = currentPath;
   const pendingNavRef = useRef<Partial<RouteState> | null>(null);
-  const navTargetRef = useRef<string | null>(null);
   const navScheduledRef = useRef(false);
-  const prevPathRef = useRef(currentPath);
+  // Refs must not be written during render; mirror committed state from an
+  // effect instead. flushNavigation only reads this for fields the pending
+  // delta does not change, so effect timing is safe.
+  useEffect(() => {
+    navStateRef.current = { view: activeView, deptId: activeDepartmentId, projectId: activeProjectId, scope: taskScope };
+  });
 
   const flushNavigation = useCallback(() => {
     const pending = pendingNavRef.current;
@@ -339,8 +347,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch {
       // no window during SSR
     }
-    if (path === currentPathRef.current) return;
-    navTargetRef.current = path;
+    if (path === `${window.location.pathname}${window.location.search}`) return;
     router.push(path, { scroll: false });
   }, [router]);
 
@@ -382,16 +389,20 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     queueNavigation({ scope });
   };
 
-  // Apply URL -> state on real navigations (sidebar links, back/forward, direct load).
-  if (prevPathRef.current !== currentPath) {
-    prevPathRef.current = currentPath;
-    navTargetRef.current = null;
-  }
-  if (!navTargetRef.current && !pendingNavRef.current && route) {
-    if (route.view !== activeView) setActiveViewState(route.view);
-    if (route.deptId !== activeDepartmentId) setActiveDepartmentIdState(route.deptId);
-    if (route.projectId !== activeProjectId) setActiveProjectIdState(route.projectId);
-    if (route.scope !== taskScope) setTaskScopeState(route.scope);
+  // Apply URL -> state on real navigations (sidebar links, back/forward, direct
+  // load). Gated on an actual path change: while our own router.push is still
+  // in flight the route describes the old URL, and applying it would revert
+  // state that handlers just set. Adjusting state during render is the
+  // React-sanctioned alternative to a ref-based effect here.
+  const [syncedPath, setSyncedPath] = useState(currentPath);
+  if (syncedPath !== currentPath) {
+    setSyncedPath(currentPath);
+    if (route) {
+      if (route.view !== activeView) setActiveViewState(route.view);
+      if (route.deptId !== activeDepartmentId) setActiveDepartmentIdState(route.deptId);
+      if (route.projectId !== activeProjectId) setActiveProjectIdState(route.projectId);
+      if (route.scope !== taskScope) setTaskScopeState(route.scope);
+    }
   }
 
   // UI States
@@ -652,7 +663,9 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // up other tabs).
   useEffect(() => {
     if (!authed) return;
-    runInitialLoad();
+    // Kick the load off from a microtask: runInitialLoad finishes in setState,
+    // and the effect body itself must not update state synchronously.
+    void Promise.resolve().then(() => runInitialLoad());
     if (!isDemoMode) {
       const supabase = getSupabaseBrowser();
       const chatRT = supabase
@@ -929,7 +942,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     if (isDemoMode) {
       const newSub: Subtask = {
-        id: `sub-${Date.now()}`,
+        id: localId('sub'),
         taskId,
         title,
         completed: false,
@@ -1488,7 +1501,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const addTaskUpdate = async (taskId: string, content: string, parentUpdateId?: string, mentions?: string[]) => {
     if (isDemoMode) {
       const newUpdate: TaskUpdate = {
-        id: `update-${Date.now()}`,
+        id: localId('update'),
         taskId,
         userId: currentUser.id,
         parentUpdateId,
@@ -1696,7 +1709,7 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
-  const logTaskActivity = async (taskId: string, actionType: string, actionData?: Record<string, any>) => {
+  const logTaskActivity = async (taskId: string, actionType: string, actionData?: Record<string, unknown>) => {
     if (isDemoMode) {
       const newActivity: TaskActivity = {
         id: `activity-${Date.now()}`,

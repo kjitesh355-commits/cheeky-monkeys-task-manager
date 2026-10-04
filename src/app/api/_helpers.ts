@@ -1,13 +1,65 @@
 import { getSupabaseServer } from '@/supabase/server';
 import { demoStore } from './_utils';
+import type { Notification, Task } from '@/types';
 
 type SupabaseClient = NonNullable<Awaited<ReturnType<typeof getSupabaseServer>>>;
 
+/** Raw `subtasks` row (snake_case columns, camelCase demo fallbacks). */
+type SubtaskRow = {
+  id: string;
+  task_id: string;
+  title: string;
+  completed?: boolean | null;
+  assignee_id?: string | null;
+  due_date?: string | null;
+  created_at?: string | null;
+  taskId?: string;
+  assigneeId?: string | null;
+  dueDate?: string | null;
+  createdAt?: string | null;
+};
+
+/** Raw `tasks` row (snake_case columns) optionally enriched with relations. */
+type TaskRow = {
+  id: string;
+  title: string;
+  status: Task['status'];
+  priority: Task['priority'];
+  project_id: string;
+  department_id: string;
+  created_by_id: string;
+  created_at: string;
+  updated_at: string;
+  parent_task_id?: string | null;
+  archived?: boolean | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  tags?: string[] | null;
+  estimated_hours?: number | null;
+  logged_hours?: number | null;
+  assignees?: { user_id: string }[] | null;
+  comments?: unknown[] | null;
+  subtasks?: SubtaskRow[] | null;
+  subtaskRows?: SubtaskRow[] | null;
+  projectId?: string;
+  departmentId?: string;
+  createdById?: string;
+  parentTaskId?: string | null;
+  startDate?: string | null;
+  dueDate?: string | null;
+  assigneeIds?: string[];
+  commentsCount?: number;
+  estimatedHours?: number;
+  loggedHours?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 /** Map a raw `tasks` row (with relations) into the app's camelCase Task shape. */
-export function mapTask(row: any): any {
+export function mapTask(row: TaskRow): Task {
   return {
     ...row,
-    assigneeIds: row.assignees?.map((a: any) => a.user_id) ?? row.assigneeIds ?? [],
+    assigneeIds: row.assignees?.map((a) => a.user_id) ?? row.assigneeIds ?? [],
     projectId: row.project_id ?? row.projectId,
     departmentId: row.department_id ?? row.departmentId,
     createdById: row.created_by_id ?? row.createdById,
@@ -25,7 +77,7 @@ export function mapTask(row: any): any {
   };
 }
 
-export function mapSubtask(row: any) {
+export function mapSubtask(row: SubtaskRow) {
   return {
     id: row.id,
     taskId: row.task_id ?? row.taskId,
@@ -43,7 +95,7 @@ export async function logTaskActivity(
   taskId: string,
   userId: string,
   actionType: string,
-  actionData: Record<string, any> = {}
+  actionData: Record<string, unknown> = {}
 ): Promise<void> {
   try {
     if (!supabase) {
@@ -54,7 +106,7 @@ export async function logTaskActivity(
         actionType,
         actionData,
         createdAt: new Date().toISOString(),
-        user: demoStore.users.find((u: any) => u.id === userId),
+        user: demoStore.users.find((u) => u.id === userId),
       });
       return;
     }
@@ -100,7 +152,7 @@ export async function createNotification(
       demoStore.notifications.unshift({
         id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         userId: params.userId,
-        type: params.type as any,
+        type: params.type as Notification['type'],
         title: params.title,
         message: params.message || '',
         read: false,

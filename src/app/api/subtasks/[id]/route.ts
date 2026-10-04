@@ -2,19 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/supabase/server';
 import { demoStore, getUser, isDemoMode } from '../../_utils';
 import { logTaskActivity, mapSubtask } from '../../_helpers';
+import type { Subtask } from '@/types';
+
+// Subtask shape used by the progress sync (either a raw row or a demo subtask).
+type SubtaskRowLike = {
+  id: string;
+  completed?: boolean | null;
+  task_id?: string | null;
+  taskId?: string;
+  title?: string;
+  assignee_id?: string | null;
+  assigneeId?: string | null;
+  due_date?: string | null;
+  dueDate?: string | null;
+  created_at?: string | null;
+  createdAt?: string | null;
+};
 
 /** Recompute task progress from subtasks and sync completion status. */
 async function syncTaskProgress(supabase: NonNullable<Awaited<ReturnType<typeof getSupabaseServer>>> | null, taskId: string, userId: string) {
-  const rows = supabase
+  const rows: SubtaskRowLike[] = supabase
     ? (await supabase.from('subtasks').select('*').eq('task_id', taskId)).data || []
-    : demoStore.tasks.find((t: any) => t.id === taskId)?.subtasks || [];
+    : demoStore.tasks.find((t) => t.id === taskId)?.subtasks || [];
 
   const total = rows.length;
-  const completed = rows.filter((s: any) => s.completed).length;
+  const completed = rows.filter((s) => s.completed).length;
   const progress = total > 0 ? Math.round((completed / total) * 100) : undefined;
 
   if (!supabase) {
-    const task = demoStore.tasks.find((t: any) => t.id === taskId);
+    const task = demoStore.tasks.find((t) => t.id === taskId);
     if (task) {
       const before = task.status;
       if (progress !== undefined) task.progress = progress;
@@ -31,7 +47,7 @@ async function syncTaskProgress(supabase: NonNullable<Awaited<ReturnType<typeof 
   const { data: task } = await supabase.from('tasks').select('id, status').eq('id', taskId).single();
   if (!task) return;
 
-  const updates: Record<string, any> = { updated_at: new Date().toISOString() };
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (progress !== undefined) updates.progress = progress;
 
   let newStatus = task.status;
@@ -52,7 +68,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -61,9 +77,9 @@ export async function PATCH(
   const body = await request.json();
 
   if (isDemoMode()) {
-    let target: any = null;
+    let target: Subtask | null = null;
     for (const task of demoStore.tasks) {
-      const sub = task.subtasks?.find((s: any) => s.id === id);
+      const sub = task.subtasks?.find((s) => s.id === id);
       if (sub) {
         target = sub;
         break;
@@ -102,7 +118,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Subtask not found' }, { status: 404 });
   }
 
-  const updates: Record<string, any> = {};
+  const updates: Record<string, unknown> = {};
   if (body.title !== undefined) updates.title = body.title;
   if (body.assigneeId !== undefined) updates.assignee_id = body.assigneeId;
   if (body.dueDate !== undefined) updates.due_date = body.dueDate;
@@ -132,7 +148,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -142,7 +158,7 @@ export async function DELETE(
   if (isDemoMode()) {
     for (const task of demoStore.tasks) {
       const before = task.subtasks?.length || 0;
-      task.subtasks = (task.subtasks || []).filter((s: any) => s.id !== id);
+      task.subtasks = (task.subtasks || []).filter((s) => s.id !== id);
       if (task.subtasks.length !== before) {
         await logTaskActivity(null, task.id, user.id, 'TASK_UPDATED', { field: 'subtask_removed' });
         await syncTaskProgress(null, task.id, user.id);

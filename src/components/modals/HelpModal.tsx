@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, HelpCircle, Command, CheckSquare, Layers, Folder } from 'lucide-react';
+import { X, HelpCircle } from 'lucide-react';
 
 export const HelpModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   if (!isOpen) return null;

@@ -7,7 +7,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -15,7 +15,7 @@ export async function GET(
   const { id } = await params;
 
   if (isDemoMode()) {
-    const file = demoStore.taskFiles?.find((f: any) => f.id === id);
+    const file = demoStore.taskFiles?.find((f) => f.id === id);
     if (!file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
@@ -63,7 +63,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -71,7 +71,7 @@ export async function DELETE(
   const { id } = await params;
 
   if (isDemoMode()) {
-    const file = demoStore.taskFiles?.find((f: any) => f.id === id);
+    const file = demoStore.taskFiles?.find((f) => f.id === id);
     if (!file) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
@@ -79,7 +79,7 @@ export async function DELETE(
     if (file.uploadedBy !== user.id && !canModerate(role)) {
       return NextResponse.json({ error: 'You do not have permission to delete this file' }, { status: 403 });
     }
-    demoStore.taskFiles = demoStore.taskFiles.filter((f: any) => f.id !== id);
+    demoStore.taskFiles = demoStore.taskFiles.filter((f) => f.id !== id);
     await logTaskActivity(null, file.taskId, user.id, 'FILE_DELETED', { file_name: file.fileName });
     return NextResponse.json({ success: true });
   }

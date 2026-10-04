@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/supabase/server';
 import { appMode } from '@/lib/env';
 import type { Task, Project, Department, User, Document, DocumentFolder, Channel, Message, Notification, TaskUpdate, TaskFile, TaskActivity } from '@/types';
@@ -31,7 +30,7 @@ function initDemoData() {
 }
 
 // Helper to get user from request
-async function getUser(request: NextRequest) {
+async function getUser() {
   if (appMode === 'supabase') {
     const supabase = await getSupabaseServer();
     if (!supabase) return null;

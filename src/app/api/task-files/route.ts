@@ -23,7 +23,30 @@ const PREVIEWABLE = new Set([
   'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'application/pdf',
 ]);
 
-function shapeFile(f: any) {
+// Raw `task_files` row (snake_case columns) with camelCase/demo fallbacks.
+type TaskFileRow = {
+  id: string;
+  task_id: string;
+  file_path: string;
+  file_type: string;
+  uploaded_by?: string | null;
+  file_name?: string | null;
+  file_size?: number | null;
+  storage_provider?: string | null;
+  created_at?: string | null;
+  uploader?: unknown;
+  downloadUrl?: string | null;
+  taskId?: string;
+  uploadedBy?: string;
+  fileName?: string;
+  filePath?: string;
+  fileType?: string;
+  fileSize?: number;
+  storageProvider?: string;
+  createdAt?: string;
+};
+
+function shapeFile(f: TaskFileRow) {
   return {
     ...f,
     taskId: f.task_id ?? f.taskId,
@@ -40,7 +63,7 @@ function shapeFile(f: any) {
 }
 
 export async function GET(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -53,7 +76,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (isDemoMode()) {
-    const files = demoStore.taskFiles?.filter((f: any) => f.taskId === taskId) || [];
+    const files = demoStore.taskFiles?.filter((f) => f.taskId === taskId) || [];
     return NextResponse.json(files);
   }
 
@@ -76,7 +99,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Signed URLs for previewable files (images / PDFs)
-  const files = await Promise.all((data || []).map(async (f: any) => {
+  const files = await Promise.all((data || []).map(async (f: TaskFileRow) => {
     let downloadUrl: string | undefined;
     if (PREVIEWABLE.has(f.file_type)) {
       const { data: signed } = await supabase.storage
@@ -91,7 +114,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getUser(request);
+  const user = await getUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -123,7 +146,7 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
       storageProvider: 'demo',
       createdAt: new Date().toISOString(),
-      uploader: demoStore.users.find((u: any) => u.id === user.id),
+      uploader: demoStore.users.find((u) => u.id === user.id),
     };
 
     if (!demoStore.taskFiles) demoStore.taskFiles = [];

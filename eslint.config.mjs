@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Stale external tool worktrees (not part of this app):
+    ".kilo/**",
   ]),
 ]);
 

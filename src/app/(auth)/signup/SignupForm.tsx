@@ -5,14 +5,12 @@ import { Mail, Lock, User, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-r
 import { createBrowserClient } from '@supabase/ssr';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/lib/env';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 interface SignupFormProps {
   inviteToken: string | null;
 }
 
 export default function SignupForm({ inviteToken }: SignupFormProps) {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
