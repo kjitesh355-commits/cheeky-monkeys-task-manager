@@ -404,9 +404,15 @@ const poll = async (fn, ms = 8000, iv = 300) => {
     await page.locator('input[aria-label="Document title"]').fill('Acceptance Doc');
     await page.getByText('Saved', { exact: true }).first().waitFor({ timeout: 10000 });
     await page.locator('textarea[aria-label="Document content"]').fill('Acceptance content: runbooks live here.');
-    await page.waitForTimeout(1500);
     const val = await page.locator('textarea[aria-label="Document content"]').inputValue();
     if (!val.includes('Acceptance content')) throw new Error('content not in editor');
+    // The editor debounces saves by 700ms — wait for the DB write to land
+    // before step 23 reloads, otherwise an in-flight PATCH gets aborted.
+    const persisted = await poll(async () => {
+      const r = await rest('documents?select=content');
+      return r.some((d) => d.content && d.content.includes('Acceptance content')) ? r : null;
+    }, 15000);
+    if (!persisted) throw new Error('content not persisted to DB');
   });
 
   // ================= 23. Doc persists after reload =================

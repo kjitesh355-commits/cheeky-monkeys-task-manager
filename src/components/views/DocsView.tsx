@@ -17,19 +17,41 @@ const DocEditor: React.FC<{
   const [content, setContent] = useState(doc.content || '');
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPatchRef = useRef<{ id: string; patch: Partial<Document> } | null>(null);
+  const onUpdateRef = useRef(onUpdate);
+  useEffect(() => {
+    onUpdateRef.current = onUpdate;
+  });
 
   useEffect(() => {
     return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (saveTimer.current) {
+        clearTimeout(saveTimer.current);
+        saveTimer.current = null;
+      }
+      // Flush the debounced edit on unmount so switching docs/views within
+      // the 700ms window does not silently drop it.
+      const pending = pendingPatchRef.current;
+      pendingPatchRef.current = null;
+      if (pending) {
+        onUpdateRef.current(pending.id, pending.patch).catch(() => {
+          /* best-effort flush */
+        });
+      }
     };
   }, []);
 
   const scheduleSave = (patch: Partial<Document>) => {
+    pendingPatchRef.current = { id: doc.id, patch };
     setSaveState('saving');
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
+      saveTimer.current = null;
+      const toSend = pendingPatchRef.current;
+      pendingPatchRef.current = null;
+      if (!toSend) return;
       try {
-        await onUpdate(doc.id, patch);
+        await onUpdate(toSend.id, toSend.patch);
         setSaveState('saved');
       } catch {
         setSaveState('idle');
