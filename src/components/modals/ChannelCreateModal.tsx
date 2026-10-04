@@ -1,32 +1,35 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Hash, Plus } from 'lucide-react';
+import { X, Hash } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 
 export const ChannelCreateModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { channels, setActiveChannelId, setActiveView, currentUser } = useWorkspace();
+  const { addChannel, setActiveChannelId, setActiveView } = useWorkspace();
   const [name, setName] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || submitting) return;
 
-    const formattedName = name.toLowerCase().replace(/\s+/g, '-');
-    const newChan = {
-      id: `chan-${Date.now()}`,
-      name: formattedName,
-      type: 'PUBLIC' as const,
-      memberIds: [currentUser.id],
-    };
-
-    channels.push(newChan);
-    setActiveChannelId(newChan.id);
-    setActiveView('CHAT');
-    setName('');
-    onClose();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const formattedName = name.trim().toLowerCase().replace(/\s+/g, '-');
+      const newChan = await addChannel({ name: formattedName, type: 'PUBLIC' });
+      setActiveChannelId(newChan.id);
+      setActiveView('CHAT');
+      setName('');
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not create channel');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -64,6 +67,8 @@ export const ChannelCreateModal: React.FC<{ isOpen: boolean; onClose: () => void
             </div>
           </div>
 
+          {error && <p className="text-xs text-rose-600 font-medium">{error}</p>}
+
           <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
             <button
               type="button"
@@ -74,9 +79,10 @@ export const ChannelCreateModal: React.FC<{ isOpen: boolean; onClose: () => void
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
+              disabled={submitting || !name.trim()}
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all disabled:opacity-50"
             >
-              Create Channel
+              {submitting ? 'Creating…' : 'Create Channel'}
             </button>
           </div>
         </form>

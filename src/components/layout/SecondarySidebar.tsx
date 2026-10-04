@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Cpu,
   Users,
+  User,
   Building2,
   CheckCircle2,
   FolderPlus,
@@ -23,14 +24,20 @@ export const SecondarySidebar: React.FC = () => {
     departments,
     projects,
     channels,
+    users,
+    currentUser,
     activeDepartmentId,
     setActiveDepartmentId,
     activeProjectId,
     setActiveProjectId,
     activeView,
     setActiveView,
+    setActiveChannelId,
+    taskScope,
+    setTaskScope,
     setDeptModalOpen,
     setChannelModalOpen,
+    setDmModalOpen,
     setFilterStatus,
   } = useWorkspace();
 
@@ -87,7 +94,7 @@ export const SecondarySidebar: React.FC = () => {
             placeholder="Search departments..."
             value={searchTree}
             onChange={(e) => setSearchTree(e.target.value)}
-            className="w-full bg-secondary text-foreground text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary border border-border placeholder:text-muted-foreground transition-all"
+            className="w-full bg-secondary text-foreground text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary/40 placeholder:text-muted-foreground transition-all"
           />
         </div>
       </div>
@@ -110,11 +117,12 @@ export const SecondarySidebar: React.FC = () => {
                 onClick={() => {
                   setActiveDepartmentId(null);
                   setActiveProjectId(null);
+                  setTaskScope('all');
                   setActiveView('DASHBOARD');
                 }}
                 className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   activeDepartmentId === null && activeProjectId === null && activeView === 'DASHBOARD'
-                    ? 'bg-secondary text-foreground font-semibold'
+                    ? 'bg-accent text-accent-foreground font-semibold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                 }`}
               >
@@ -127,11 +135,12 @@ export const SecondarySidebar: React.FC = () => {
                   setActiveDepartmentId(null);
                   setActiveProjectId(null);
                   setFilterStatus('ALL');
+                  setTaskScope('mine');
                   setActiveView('LIST');
                 }}
                 className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  activeView === 'LIST' && activeDepartmentId === null
-                    ? 'bg-secondary text-foreground font-semibold'
+                  activeView !== 'DASHBOARD' && activeDepartmentId === null && taskScope === 'mine'
+                    ? 'bg-accent text-accent-foreground font-semibold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                 }`}
               >
@@ -175,7 +184,7 @@ export const SecondarySidebar: React.FC = () => {
                     <div
                       className={`group flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         isDeptActive && activeProjectId === null
-                          ? 'bg-primary/10 text-primary font-semibold border border-primary/20'
+                          ? 'bg-accent text-accent-foreground font-semibold'
                           : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                       }`}
                     >
@@ -201,13 +210,13 @@ export const SecondarySidebar: React.FC = () => {
 
                     {/* Structural Sub-Teams & Projects */}
                     {isExpanded && (
-                      <div className="ml-4 pl-2 border-l border-border space-y-0.5">
+                      <div className="ml-4 space-y-0.5">
                         {dept.teams.map((team) => (
                           <div
                             key={team.id}
                             className="px-2 py-1 text-[11px] text-muted-foreground flex items-center gap-2"
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-dim/60" />
                             <span className="truncate">{team.name}</span>
                           </div>
                         ))}
@@ -255,19 +264,24 @@ export const SecondarySidebar: React.FC = () => {
 
           {expandedSections.CHANNELS && (
             <div className="mt-1 space-y-1">
-              {channels.length === 0 ? (
+              {channels.filter((c) => c.type !== 'DIRECT').length === 0 ? (
                 <div className="px-2 py-1.5 text-xs text-muted-foreground italic">No channels yet.</div>
               ) : (
-                channels.map((chan) => (
-                  <button
-                    key={chan.id}
-                    onClick={() => setActiveView('CHAT')}
-                    className="w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary"
-                  >
-                    <Hash size={14} />
-                    <span>{chan.name}</span>
-                  </button>
-                ))
+                channels
+                  .filter((c) => c.type !== 'DIRECT')
+                  .map((chan) => (
+                    <button
+                      key={chan.id}
+                      onClick={() => {
+                        setActiveChannelId(chan.id);
+                        setActiveView('CHAT');
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary"
+                    >
+                      <Hash size={14} />
+                      <span>{chan.name}</span>
+                    </button>
+                  ))
               )}
 
               <button
@@ -293,9 +307,35 @@ export const SecondarySidebar: React.FC = () => {
 
           {expandedSections.DIRECT && (
             <div className="mt-1 space-y-1">
-              <div className="px-2 py-1.5 text-xs text-muted-foreground italic">No conversations yet.</div>
+              {channels.filter((c) => c.type === 'DIRECT').length === 0 ? (
+                <div className="px-2 py-1.5 text-xs text-muted-foreground italic">No conversations yet.</div>
+              ) : (
+                channels
+                  .filter((c) => c.type === 'DIRECT')
+                  .map((chan) => {
+                    const partner = users.find((u) => u.id !== currentUser.id && chan.memberIds.includes(u.id));
+                    const label = partner?.name ?? 'Direct Message';
+                    return (
+                      <button
+                        key={chan.id}
+                        onClick={() => {
+                          setActiveChannelId(chan.id);
+                          setActiveView('CHAT');
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      >
+                        {partner?.avatar ? (
+                          <img src={partner.avatar} alt={partner.name} className="w-4 h-4 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <User size={14} />
+                        )}
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })
+              )}
               <button
-                onClick={() => setActiveView('CHAT')}
+                onClick={() => setDmModalOpen(true)}
                 className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground font-medium hover:bg-secondary rounded-lg transition-colors"
               >
                 <Plus size={14} />

@@ -1,18 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Folder, Layers, Palette } from 'lucide-react';
+import { X, Folder, Palette } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 
 export const ProjectCreateModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+  // The wrapper stays mounted (AppShell renders modals unconditionally); the
+  // form mounts only while open so its state seeds from live workspace context.
+  if (!isOpen) return null;
+  return <ProjectForm onClose={onClose} />;
+};
+
+const ProjectForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { departments, addProject, activeDepartmentId } = useWorkspace();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [departmentId, setDepartmentId] = useState(activeDepartmentId || departments[0]?.id || '');
   const [color, setColor] = useState('#6366F1');
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

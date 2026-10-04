@@ -1,4 +1,4 @@
-import { User, Department, Project, Task, Document, Channel, Message, Notification, ActivityLog } from '../types';
+import { User, Department, Project, Task, Document, DocumentFolder, Channel, Message, Notification, ActivityLog } from '../types';
 
 export const INITIAL_USERS: User[] = [
   {
@@ -105,6 +105,7 @@ export const INITIAL_DEPARTMENTS: Department[] = [
 export const INITIAL_PROJECTS: Project[] = [];
 export const INITIAL_TASKS: Task[] = [];
 export const INITIAL_DOCUMENTS: Document[] = [];
+export const INITIAL_FOLDERS: DocumentFolder[] = [];
 export const INITIAL_CHANNELS: Channel[] = [];
 export const INITIAL_MESSAGES: Message[] = [];
 export const INITIAL_NOTIFICATIONS: Notification[] = [];

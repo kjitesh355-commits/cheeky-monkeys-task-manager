@@ -1,29 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, User, Mail, Shield, Check } from 'lucide-react';
+import { X, User, Check, LogOut } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
+import { getSupabaseBrowser } from '../../supabase/client';
 
 export const ProfileModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { currentUser } = useWorkspace();
+  const { currentUser, updateCurrentUser } = useWorkspace();
   const [name, setName] = useState(currentUser.name);
   const [title, setTitle] = useState(currentUser.title);
   const [email, setEmail] = useState(currentUser.email);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    try {
+      await updateCurrentUser({ name: name.trim(), title: title.trim(), email: email.trim() });
+      setSaved(true);
+      setTimeout(() => {
+        setSaved(false);
+        onClose();
+      }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save your profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    const supabase = getSupabaseBrowser();
+    if (supabase) {
+      await supabase.auth.signOut();
+    }
+    // Redirect to login page
+    window.location.href = '/login';
+  };
 
   if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    currentUser.name = name;
-    currentUser.title = title;
-    currentUser.email = email;
-    setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      onClose();
-    }, 1000);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4 animate-fade-in select-none">
@@ -94,6 +114,12 @@ export const ProfileModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               />
             </div>
 
+            {error && (
+              <p className="text-[11px] text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
+
             {/* Buttons */}
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
               <button
@@ -105,13 +131,26 @@ export const ProfileModal: React.FC<{ isOpen: boolean; onClose: () => void }> = 
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
+                disabled={saving}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all disabled:opacity-60"
               >
-                Save Changes
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>
         )}
+
+        {/* Footer with Logout */}
+        <div className="px-5 py-4 border-t border-border">
+          <button
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
+          >
+            <LogOut size={16} />
+            <span>{isLoggingOut ? 'Signing out...' : 'Sign out'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,28 +1,40 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, UserPlus, Mail, Shield, Check } from 'lucide-react';
+import { X, UserPlus, Mail, Shield, Check, Loader2 } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 
 export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { toggleOnboardingStep } = useWorkspace();
+  const { toggleOnboardingStep, inviteMember } = useWorkspace();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('MEMBER');
   const [invited, setInvited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
 
-    setInvited(true);
-    toggleOnboardingStep('ob-3'); // Mark 'Invite team members' onboarding step complete
-    setTimeout(() => {
-      setEmail('');
-      setInvited(false);
-      onClose();
-    }, 1200);
+    setIsLoading(true);
+    setError('');
+
+    try {
+      await inviteMember({ email: email.trim(), role });
+      setInvited(true);
+      toggleOnboardingStep('ob-3');
+      setTimeout(() => {
+        setEmail('');
+        setInvited(false);
+        onClose();
+      }, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send invitation');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,7 +48,8 @@ export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = (
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground"
+            disabled={isLoading}
+            className="p-1 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
           >
             <X size={18} />
           </button>
@@ -53,6 +66,12 @@ export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = (
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs animate-fade-in">
+                <span>{error}</span>
+              </div>
+            )}
+
             <div>
               <label className="block font-semibold text-muted-foreground mb-1">Email Address *</label>
               <div className="relative">
@@ -64,7 +83,8 @@ export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoFocus
-                  className="w-full bg-secondary border border-border rounded-xl pl-9 pr-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full bg-secondary border border-border rounded-xl pl-9 pr-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                 />
               </div>
             </div>
@@ -76,7 +96,8 @@ export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-secondary border border-border rounded-xl pl-9 pr-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  disabled={isLoading}
+                  className="w-full bg-secondary border border-border rounded-xl pl-9 pr-3 py-2 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                 >
                   <option value="ADMIN">Admin (Full Workspace Management)</option>
                   <option value="MEMBER">Member (Create & Edit Tasks/Projects)</option>
@@ -90,15 +111,24 @@ export const InviteModal: React.FC<{ isOpen: boolean; onClose: () => void }> = (
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-secondary"
+                disabled={isLoading}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
+                disabled={isLoading || !email.trim()}
+                className="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Send Invitation
+                {isLoading ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Invitation'
+                )}
               </button>
             </div>
           </form>

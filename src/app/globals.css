@@ -1,71 +1,120 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Design tokens exposed as Tailwind color utilities.
+   Values reference the runtime CSS variables below so light/dark theming
+   keeps working.
+--------------------------------------------------------------------------- */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-dim: var(--dim-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F8FAFC */
-    --foreground: 222 47% 11%; /* #0F172A Dark Charcoal */
-    --card: 0 0% 100%; /* #FFFFFF White */
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 239 84% 67%; /* #6366F1 Indigo */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%; /* #F1F5F9 Light Slate */
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* #64748B Muted Grey */
-    --accent: 239 84% 67%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%; /* #E2E8F0 */
-    --input: 214 32% 91%;
-    --ring: 239 84% 67%;
-    --radius: 0.75rem;
+    --background: #F6F7FB;
+    --foreground: #172033;
+    --card: #FFFFFF;
+    --card-foreground: #172033;
+    --popover: #FFFFFF;
+    --popover-foreground: #172033;
+    --primary: #5B4BFF;
+    --primary-foreground: #FFFFFF;
+    --secondary: #F2F4F7;
+    --secondary-foreground: #172033;
+    --muted: #F2F4F7;
+    --muted-foreground: #667085;
+    --dim-foreground: #98A2B3;
+    --accent: #F0EEFF;
+    --accent-foreground: #5B4BFF;
+    --success: #12B76A;
+    --success-foreground: #FFFFFF;
+    --warning: #F79009;
+    --warning-foreground: #FFFFFF;
+    --destructive: #F04438;
+    --destructive-foreground: #FFFFFF;
+    --border: #E7E9F0;
+    --input: #E7E9F0;
+    --ring: #5B4BFF;
+    --radius: 0.75rem; /* 12px */
   }
 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 13%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 13%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 239 84% 67%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217 33% 15%;
-    --input: 217 33% 15%;
-    --ring: 239 84% 67%;
+    --background: hsl(224 71% 4%);
+    --foreground: hsl(210 40% 98%);
+    --card: hsl(222 47% 7%);
+    --card-foreground: hsl(210 40% 98%);
+    --popover: hsl(222 47% 7%);
+    --popover-foreground: hsl(210 40% 98%);
+    --primary: hsl(246 72% 59%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(217 33% 13%);
+    --secondary-foreground: hsl(210 40% 98%);
+    --muted: hsl(217 33% 13%);
+    --muted-foreground: hsl(215 20% 65%);
+    --dim-foreground: hsl(217 17% 55%);
+    --accent: hsl(246 72% 59%);
+    --accent-foreground: hsl(210 40% 98%);
+    --success: hsl(142 71% 36%);
+    --success-foreground: hsl(0 0% 100%);
+    --warning: hsl(38 92% 50%);
+    --warning-foreground: hsl(0 0% 100%);
+    --destructive: hsl(0 84% 51%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(217 33% 15%);
+    --input: hsl(217 33% 15%);
+    --ring: hsl(246 72% 59%);
+  }
+}
+
+@layer utilities {
+  .clean-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+    border-radius: 12px;
+  }
+
+  /* Soft white → light lavender header surface for the welcome hero */
+  .hero-surface {
+    background: linear-gradient(135deg, #ffffff 0%, #fdfdff 55%, #f4f5ff 100%);
+  }
+
+  .bg-gradient-subtle {
+    background-image: 
+      radial-gradient(ellipse at 0% 0%, rgba(91, 75, 255, 0.05) 0px, transparent 50%),
+      radial-gradient(ellipse at 100% 100%, rgba(91, 75, 255, 0.03) 0px, transparent 50%);
   }
 }
 
 body {
-  background-color: hsl(var(--background));
-  background-image: radial-gradient(at 0% 0%, rgba(245, 243, 255, 0.6) 0px, transparent 50%),
-                    radial-gradient(at 100% 100%, rgba(238, 242, 255, 0.4) 0px, transparent 50%);
-  color: hsl(var(--foreground));
+  background-color: var(--background);
+  color: var(--foreground);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
   letter-spacing: -0.011em;
-}
-
-/* Custom Clean Cards */
-.clean-card {
-  background: #ffffff;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
-  border-radius: 0.875rem;
-}
-
-.dark .clean-card {
-  background: hsl(var(--card));
-  border-color: hsl(var(--border));
 }
 
 /* Custom Scrollbars */
@@ -79,12 +128,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(102, 112, 133, 0.2);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+  background: rgba(102, 112, 133, 0.35);
 }
 
 /* Animations */
@@ -104,4 +153,16 @@ body {
 
 .animate-slide-in-right {
   animation: slideInRight 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  color: var(--primary);
 }

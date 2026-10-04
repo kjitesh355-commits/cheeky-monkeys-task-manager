@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
+import { Toaster } from 'sonner';
 import { WorkspaceProvider } from '../context/WorkspaceContext';
 
 export const metadata: Metadata = {
-  title: 'WORKSPACE | Enterprise Productivity Platform',
-  description: 'Next-gen enterprise company operating system inspired by ClickUp, Linear, and Notion.',
+  title: 'WORKSPACE | Company Productivity Platform',
+  description: 'Enterprise company operating system for managing departments, projects, tasks, and team collaboration.',
 };
 
 export default function RootLayout({
@@ -13,9 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased selection:bg-primary/30 selection:text-primary">
-        <WorkspaceProvider>{children}</WorkspaceProvider>
+    <html lang="en" className="light">
+      <body className="antialiased selection:bg-primary/20 selection:text-primary">
+        <Suspense fallback={null}>
+          <WorkspaceProvider>{children}</WorkspaceProvider>
+        </Suspense>
+        <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>
   );

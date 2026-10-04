@@ -5,9 +5,8 @@ import { X, Calendar, User, Tag, Flag, Folder, Layers } from 'lucide-react';
 import { useWorkspace } from '../../context/WorkspaceContext';
 import { TaskPriority, TaskStatus } from '../../types';
 
-export const TaskCreateModal: React.FC = () => {
+const TaskForm: React.FC = () => {
   const {
-    isTaskModalOpen,
     setTaskModalOpen,
     addTask,
     departments,
@@ -15,6 +14,7 @@ export const TaskCreateModal: React.FC = () => {
     users,
     activeDepartmentId,
     activeProjectId,
+    taskModalDueDate,
   } = useWorkspace();
 
   const [title, setTitle] = useState('');
@@ -24,10 +24,8 @@ export const TaskCreateModal: React.FC = () => {
   const [priority, setPriority] = useState<TaskPriority>('MEDIUM');
   const [status, setStatus] = useState<TaskStatus>('TO_DO');
   const [assigneeId, setAssigneeId] = useState(users[0]?.id || '');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(taskModalDueDate || '');
   const [tagInput, setTagInput] = useState('');
-
-  if (!isTaskModalOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,4 +216,11 @@ export const TaskCreateModal: React.FC = () => {
       </div>
     </div>
   );
+};
+
+export const TaskCreateModal: React.FC = () => {
+  const { isTaskModalOpen } = useWorkspace();
+  if (!isTaskModalOpen) return null;
+  // Remount per open so every field starts fresh (due date, priority, ...).
+  return <TaskForm key="task-form" />;
 };

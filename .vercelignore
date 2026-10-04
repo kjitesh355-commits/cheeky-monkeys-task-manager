@@ -1,0 +1,5 @@
+.kilo
+.git
+.env.local
+.env*.local
+*.log

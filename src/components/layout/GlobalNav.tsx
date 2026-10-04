@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Home,
   Layers,
@@ -20,32 +22,38 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 
 export const GlobalNav: React.FC = () => {
   const {
-    activeView,
-    setActiveView,
-    activeDepartmentId,
-    activeProjectId,
     isSidebarCollapsed,
     toggleSidebar,
     currentUser,
     notifications,
+    selectedTaskId,
     setInviteOpen,
     setHelpOpen,
     setProfileOpen,
-    setActiveDepartmentId,
-    setActiveProjectId,
   } = useWorkspace();
+  const pathname = usePathname();
 
+  // Keep an open task panel deep-linked (?task=...) across sidebar navigation.
+  const withTask = (href: string) =>
+    selectedTaskId ? `${href}${href.includes('?') ? '&' : '?'}task=${encodeURIComponent(selectedTaskId)}` : href;
+
+  // Every sidebar item is a real route (see src/lib/routes.ts).
   const navItems = [
-    { id: 'DASHBOARD', label: 'Home', icon: Home, action: () => { setActiveDepartmentId(null); setActiveProjectId(null); setActiveView('DASHBOARD'); } },
-    { id: 'SPACES', label: 'Department Spaces', icon: Layers, action: () => { setActiveDepartmentId(null); setActiveProjectId(null); setActiveView('DASHBOARD'); } },
-    { id: 'LIST', label: 'My Tasks', icon: CheckSquare, action: () => setActiveView('LIST') },
-    { id: 'CALENDAR', label: 'Planner & Calendar', icon: Calendar, action: () => setActiveView('CALENDAR') },
-    { id: 'TIMELINE', label: 'Timeline & Gantt', icon: LayoutGrid, action: () => setActiveView('TIMELINE') },
-    { id: 'CHAT', label: 'Team Communication', icon: MessageSquare, action: () => setActiveView('CHAT') },
-    { id: 'DOCS', label: 'Documentation & SOPs', icon: FileText, action: () => setActiveView('DOCS') },
-    { id: 'MANAGEMENT', label: 'Executive Analytics', icon: BarChart3, action: () => setActiveView('DASHBOARD') },
-    { id: 'AI', label: 'AI Workspace Assistant', icon: Bot, action: () => setActiveView('DASHBOARD') },
+    { href: '/home', label: 'Home', icon: Home },
+    { href: '/departments', label: 'Department Spaces', icon: Layers },
+    { href: '/my-tasks', label: 'My Tasks', icon: CheckSquare },
+    { href: '/planner', label: 'Planner & Calendar', icon: Calendar },
+    { href: '/timeline', label: 'Timeline & Gantt', icon: LayoutGrid },
+    { href: '/communication', label: 'Team Communication', icon: MessageSquare },
+    { href: '/docs', label: 'Documentation & SOPs', icon: FileText },
+    { href: '/analytics', label: 'Executive Analytics', icon: BarChart3 },
+    { href: '/ai-assistant', label: 'AI Workspace Assistant', icon: Bot },
   ];
+
+  const isActive = (href: string) => {
+    if (href === '/home') return pathname === '/home' || pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -59,7 +67,7 @@ export const GlobalNav: React.FC = () => {
       <div>
         <div className="flex items-center justify-between h-14 px-3 border-b border-border">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-indigo-600 text-white font-bold shadow-sm shrink-0">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-white font-bold shadow-sm shrink-0">
               W
             </div>
             {!isSidebarCollapsed && (
@@ -85,17 +93,15 @@ export const GlobalNav: React.FC = () => {
         <nav className="p-2 space-y-1 mt-2">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeView === item.id && activeDepartmentId === null && activeProjectId === null;
+            const active = isActive(item.href);
             return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  if (item.action) item.action();
-                  else setActiveView(item.id as any);
-                }}
+              <Link
+                key={item.href}
+                href={withTask(item.href)}
+                aria-current={active ? 'page' : undefined}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium transition-all group relative ${
-                  isActive
-                    ? 'bg-primary/10 text-primary font-semibold border border-primary/20'
+                  active
+                    ? 'bg-accent text-accent-foreground font-semibold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 }`}
                 title={item.label}
@@ -103,11 +109,11 @@ export const GlobalNav: React.FC = () => {
                 <Icon
                   size={18}
                   className={`shrink-0 transition-transform group-hover:scale-105 ${
-                    isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                    active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                   }`}
                 />
                 {!isSidebarCollapsed && <span className="hidden lg:inline truncate">{item.label}</span>}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -143,7 +149,7 @@ export const GlobalNav: React.FC = () => {
           <img
             src={currentUser.avatar}
             alt={currentUser.name}
-            className="w-7 h-7 rounded-full object-cover ring-2 ring-indigo-600/20 shrink-0"
+            className="w-7 h-7 rounded-full object-cover ring-2 ring-primary/20 shrink-0"
           />
           {!isSidebarCollapsed && (
             <div className="hidden lg:flex flex-col truncate">

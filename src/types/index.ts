@@ -4,7 +4,19 @@ export type TaskStatus = 'TO_DO' | 'IN_PROGRESS' | 'IN_REVIEW' | 'APPROVED' | 'C
 
 export type TaskPriority = 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
 
-export type ViewMode = 'LIST' | 'BOARD' | 'CALENDAR' | 'TIMELINE' | 'DASHBOARD' | 'DOCS' | 'CHAT';
+export type ViewMode =
+  | 'LIST'
+  | 'BOARD'
+  | 'CALENDAR'
+  | 'TIMELINE'
+  | 'DASHBOARD'
+  | 'DOCS'
+  | 'CHAT'
+  | 'ANALYTICS'
+  | 'AI'
+  | 'DEPARTMENTS';
+
+export type TaskScope = 'all' | 'mine';
 
 export interface User {
   id: string;
@@ -21,7 +33,7 @@ export interface CustomField {
   id: string;
   name: string;
   type: 'text' | 'number' | 'date' | 'select' | 'currency' | 'user';
-  value: any;
+  value: unknown;
   options?: string[];
 }
 
@@ -30,8 +42,8 @@ export interface Subtask {
   taskId: string;
   title: string;
   completed: boolean;
-  assigneeId?: string;
-  dueDate?: string;
+  assigneeId?: string | null;
+  dueDate?: string | null;
 }
 
 export interface ChecklistItem {
@@ -69,12 +81,14 @@ export interface Task {
   departmentId: string;
   assigneeIds: string[];
   createdById: string;
-  startDate?: string;
-  dueDate?: string;
+  parentTaskId?: string | null;
+  archived?: boolean;
+  startDate?: string | null;
+  dueDate?: string | null;
   tags: string[];
   subtasks: Subtask[];
   checklist?: ChecklistItem[];
-  customFields?: Record<string, any>;
+  customFields?: Record<string, unknown>;
   attachments?: Attachment[];
   commentsCount: number;
   progress?: number;
@@ -82,6 +96,24 @@ export interface Task {
   loggedHours?: number;
   createdAt: string;
   updatedAt: string;
+  updates?: TaskUpdate[];
+  files?: TaskFile[];
+  activity?: TaskActivity[];
+}
+
+export interface TaskDependency {
+  id: string;
+  taskId: string;
+  dependsOnTaskId: string;
+  createdBy?: string;
+  createdAt: string;
+  dependsOnTask?: Task;
+}
+
+export interface TaskRelations {
+  parentTask: Task | null;
+  blockedBy: Task[];
+  blocking: Task[];
 }
 
 export interface List {
@@ -145,7 +177,7 @@ export interface Notification {
   userId: string;
   title: string;
   message: string;
-  type: 'ASSIGNMENT' | 'MENTION' | 'COMMENT' | 'STATUS_CHANGE' | 'DUE_DATE' | 'APPROVAL';
+  type: 'ASSIGNMENT' | 'MENTION' | 'COMMENT' | 'STATUS_CHANGE' | 'DUE_DATE' | 'APPROVAL' | 'SYSTEM';
   read: boolean;
   taskId?: string;
   projectId?: string;
@@ -162,6 +194,70 @@ export interface ActivityLog {
   createdAt: string;
 }
 
+export interface TaskUpdate {
+  id: string;
+  taskId: string;
+  userId: string;
+  parentUpdateId?: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  author?: User;
+  replies?: TaskUpdate[];
+  reactions?: Record<string, string[]>;
+  mentions?: string[];
+  replyCount?: number;
+}
+
+export interface TaskFile {
+  id: string;
+  taskId: string;
+  uploadedBy: string;
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  fileSize: number;
+  storageProvider: string;
+  createdAt: string;
+  uploader?: User;
+  downloadUrl?: string;
+}
+
+export interface TaskActivity {
+  id: string;
+  taskId: string;
+  userId: string;
+  actionType: string;
+  actionData: Record<string, unknown>;
+  createdAt: string;
+  user?: User;
+}
+
+export type TaskActivityType = 
+  | 'TASK_CREATED'
+  | 'TASK_UPDATED'
+  | 'TASK_ASSIGNED'
+  | 'TASK_REASSIGNED'
+  | 'STATUS_CHANGED'
+  | 'PRIORITY_CHANGED'
+  | 'DUE_DATE_CHANGED'
+  | 'START_DATE_CHANGED'
+  | 'PROJECT_CHANGED'
+  | 'DEPARTMENT_CHANGED'
+  | 'TAG_ADDED'
+  | 'TAG_REMOVED'
+  | 'SUBTASK_CREATED'
+  | 'SUBTASK_COMPLETED'
+  | 'COMMENT_ADDED'
+  | 'COMMENT_EDITED'
+  | 'COMMENT_DELETED'
+  | 'FILE_UPLOADED'
+  | 'FILE_DELETED'
+  | 'DEPENDENCY_ADDED'
+  | 'DEPENDENCY_REMOVED'
+  | 'TASK_COMPLETED'
+  | 'TASK_REOPENED';
+
 export interface Document {
   id: string;
   title: string;
@@ -169,9 +265,19 @@ export interface Document {
   authorId: string;
   departmentId?: string;
   projectId?: string;
+  folderId?: string | null;
   updatedAt: string;
   icon?: string;
   category: 'Company' | 'Department' | 'Project' | 'SOP';
+}
+
+export interface DocumentFolder {
+  id: string;
+  name: string;
+  departmentId?: string | null;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Message {
@@ -192,4 +298,5 @@ export interface Channel {
   projectId?: string;
   memberIds: string[];
   unreadCount?: number;
+  createdAt?: string;
 }

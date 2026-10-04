@@ -7,7 +7,7 @@ import { Task, TaskStatus } from '../../types';
 
 export const TaskBoardView: React.FC = () => {
   const {
-    tasks,
+    scopedTasks,
     activeDepartmentId,
     activeProjectId,
     users,
@@ -18,7 +18,7 @@ export const TaskBoardView: React.FC = () => {
 
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
 
-  let filteredTasks = tasks;
+  let filteredTasks = scopedTasks;
   if (activeDepartmentId) {
     filteredTasks = filteredTasks.filter((t) => t.departmentId === activeDepartmentId);
   }
@@ -47,13 +47,43 @@ export const TaskBoardView: React.FC = () => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId') || draggedTaskId;
     if (taskId) {
-      updateTaskStatus(taskId, targetStatus);
+      updateTaskStatus(taskId, targetStatus).catch(() => {
+        // Status stays unchanged when the server rejects the move.
+      });
       setDraggedTaskId(null);
     }
   };
 
+  const showEmptyState = filteredTasks.length === 0;
+  const filteredOut = showEmptyState && scopedTasks.length > 0;
+
   return (
     <div className="p-6 max-w-7xl mx-auto select-none animate-fade-in overflow-x-auto">
+      {showEmptyState && (
+        <div
+          data-testid="board-empty"
+          className="mb-4 flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-card/60 p-8 text-center"
+        >
+          <CheckSquare size={28} className="text-dim" />
+          <p className="text-sm font-medium text-foreground">
+            {filteredOut ? 'No tasks match these filters' : 'No tasks yet'}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {filteredOut
+              ? 'Try a different department or project.'
+              : 'Create a task to see it move across the board.'}
+          </p>
+          {!filteredOut && (
+            <button
+              type="button"
+              onClick={() => setTaskModalOpen(true)}
+              className="mt-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            >
+              Create Task
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex items-start gap-4 min-w-[1000px]">
         {columns.map((col) => {
           const colTasks = filteredTasks.filter((t) =>
